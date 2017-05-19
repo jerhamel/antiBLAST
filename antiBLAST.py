@@ -30,9 +30,9 @@ def read_result(infile):
 			pathway = full_id_list[3]
 			orf = full_id_list[4]+"_"+full_id_list[5]
 
-	if file.endswith("nr.out"):
+	if infile.endswith("nr.out"):
 		output_type = "nr"
-	if file.endswith("pdb.out"):
+	if infile.endswith("pdb.out"):
 		output_type = "pdb"
 
 	if output_type == "nr":
@@ -227,10 +227,11 @@ def read_cluster(file, ID, path):
 			header = ">"+description+"_"+orf
 			filename = "fasta/"+ID+"/"+ID+"_"+orf+".fasta"
 			#print(orf_prog, "of", len(orfs_list), " ORFs in scaffold", scaffold_prog, "of", len(line))
-			print("Writing", filename)
+
 			if not sequence == "-":
 				if not os.path.exists("fasta/"+ID):
 					os.makedirs("fasta/"+ID)
+				print("Writing", filename)
 				fasta_file = open(filename, "w+")           #Create fasta file
 				fasta_file.write(header+"\n"+sequence)      #Write
 				fasta_file.close()                          #Close
@@ -239,7 +240,7 @@ def read_cluster(file, ID, path):
 
 def creator(path):
 
-	run_name_index = 0
+	run_name_index = 0						#Fix name selection when path changes
 	for character in str(path):
 		if character == "/":
 			run_name_index += 1
@@ -260,7 +261,6 @@ def creator(path):
 #EXECUTOR
 ###################################################
 
-
 def executor(blastp_path):
 	sub = os.listdir("fasta/")          #List directories in fasta/
 	#dir_number = len(sub)
@@ -273,7 +273,6 @@ def executor(blastp_path):
 		for file in sub_fasta:          #To make sure not to create a list of lists
 			file_path = os.path.abspath("fasta/"+subdir+"/"+file)            #Get absolute path
 			fasta_list.append(file_path)
-
 
 		for file1 in fasta_list:
 			filename_core = (file1.split("/"))[-1]
@@ -291,11 +290,10 @@ def executor(blastp_path):
 			print("Running blastp PDB database query on", filename_core)        #Run PDB query
 			subprocess.call(blast_command_pdb, shell=True)
 
-
 	print("BLAST QUERIES COMPLETED")
 
 if __name__ == '__main__':
-	working_dir_path = '/home/jhamel/Dropbox/Work/nord/antismash/'
+	working_dir_path = (os.getcwd())+"/"				#Get working directory
 	blastp_path = "/home/jhamel/local/ncbi-blast-2.6.0+/bin/blastp"
 
 	print("Creating fasta files")
