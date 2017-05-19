@@ -12,7 +12,8 @@ import os, subprocess
 #################################################
 #ANALYZOR
 #################################################
-def read_result(infile):
+def read_result(infile, filename):
+	bacteria, scaffold, pathway, orf, top_hit_accession, description, e_value, identity_percent, positive_percent, gap_percent, output_type = ["-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", ]
 	dict_lines = {}             #Initiate linecount dictionary
 	line_num = 0
 	output_type = "-"
@@ -30,9 +31,9 @@ def read_result(infile):
 			pathway = full_id_list[3]
 			orf = full_id_list[4]+"_"+full_id_list[5]
 
-	if infile.endswith("nr.out"):
+	if filename.endswith("nr.out"):
 		output_type = "nr"
-	if infile.endswith("pdb.out"):
+	if filename.endswith("pdb.out"):
 		output_type = "pdb"
 
 	if output_type == "nr":
@@ -45,59 +46,73 @@ def read_result(infile):
 
 
 def process_nr(dict_lines):
+	top_hit_accession, description, e_value, identity_percent, positive_percent, gap_percent = ["-", "NO HIT FOUND", "-", "-", "-", "-"]
 	for line_num in dict_lines:
 		if "Sequences producing" in str(dict_lines[line_num]):      #Find top hit accession number
 			top_hit_line = dict_lines[line_num+2]
 			top_hit_accession = (str(top_hit_line).split(' '))[0]
 			top_hit_accession = top_hit_accession[2:]
+			break
+		elif "No hits found" in str(dict_lines[line_num]):
+			return top_hit_accession, description, e_value, identity_percent, positive_percent, gap_percent
+		else:
+			continue
+		break
 
-			for line_num in dict_lines:
-				if str(">"+top_hit_accession) in str(dict_lines[line_num]):     #Find top hit full result
-					description = str(dict_lines[line_num]).split(' ')
-					description = description[1:]
-					description = ' '.join(description)
-					description = description[:-6]
-					check_line = line_num+1
-					while "Score =" not in str(dict_lines[check_line]):         #Find E-value
-						check_line += 1
-					e_value = (str(dict_lines[check_line]).split(","))[1]
-					e_value = e_value.split(" ")[4]
+	for line_num in dict_lines:
+		if str(">"+top_hit_accession) in str(dict_lines[line_num]):     #Find top hit full result
+			description = str(dict_lines[line_num]).split(' ')
+			description = description[1:]
+			description = ' '.join(description)
+			description = description[:-6]
+			check_line = line_num+1
+			while "Score =" not in str(dict_lines[check_line]):         #Find E-value
+				check_line += 1
+			e_value = (str(dict_lines[check_line]).split(","))[1]
+			e_value = e_value.split(" ")[4]
 
-					following_line = str(dict_lines[check_line+1]).split(",")   #Find identities, positives and gaps
-					following_line = str(following_line).split(" ")
+			following_line = str(dict_lines[check_line+1]).split(",")   #Find identities, positives and gaps
+			following_line = str(following_line).split(" ")
 
-					identity_percent = (following_line[4])[1:-3]
-					positive_percent = (following_line[9])[1:-3]
-					gap_percent = (following_line[14])[1:-4]
+			identity_percent = (following_line[4])[1:-3]
+			positive_percent = (following_line[9])[1:-3]
+			gap_percent = (following_line[14])[1:-4]
 
 
 	return top_hit_accession, description, e_value, identity_percent, positive_percent, gap_percent
 
 def process_pdb(dict_lines):                    #Almost identical to process_nr so far, in case I wanna change stuff
+	top_hit_accession, description, e_value, identity_percent, positive_percent, gap_percent = ["-", "NO HIT FOUND", "-", "-", "-", "-"]
 	for line_num in dict_lines:
 		if "Sequences producing" in str(dict_lines[line_num]):      #Find top hit accession number
 			top_hit_line = dict_lines[line_num+2]
 			top_hit_accession = (str(top_hit_line).split(' '))[0]
 			top_hit_accession = top_hit_accession[2:]
+			break
+		elif "No hits found" in str(dict_lines[line_num]):
+			return top_hit_accession, description, e_value, identity_percent, positive_percent, gap_percent
+		else:
+			continue
+		break
 
-			for line_num in dict_lines:
-				if str(">"+top_hit_accession) in str(dict_lines[line_num]):     #Find top hit full result
-					description = str(dict_lines[line_num]).split(' ')
-					description = description[3:]                           #Only difference w/ other function
-					description = ' '.join(description)
-					description = description[:-6]
-					check_line = line_num+1
-					while "Score =" not in str(dict_lines[check_line]):         #Find E-value
-						check_line += 1
-					e_value = (str(dict_lines[check_line]).split(","))[1]
-					e_value = e_value.split(" ")[4]
+	for line_num in dict_lines:
+		if str(">"+top_hit_accession) in str(dict_lines[line_num]):     #Find top hit full result
+			description = str(dict_lines[line_num]).split(' ')
+			description = description[3:]                           #Only difference w/ other function
+			description = ' '.join(description)
+			description = description[:-6]
+			check_line = line_num+1
+			while "Score =" not in str(dict_lines[check_line]):         #Find E-value
+				check_line += 1
+			e_value = (str(dict_lines[check_line]).split(","))[1]
+			e_value = e_value.split(" ")[4]
 
-					following_line = str(dict_lines[check_line+1]).split(",")   #Find identities, positives and gaps
-					following_line = str(following_line).split(" ")
+			following_line = str(dict_lines[check_line+1]).split(",")   #Find identities, positives and gaps
+			following_line = str(following_line).split(" ")
 
-					identity_percent = (following_line[4])[1:-3]
-					positive_percent = (following_line[9])[1:-3]
-					gap_percent = (following_line[14])[1:-4]
+			identity_percent = (following_line[4])[1:-3]
+			positive_percent = (following_line[9])[1:-3]
+			gap_percent = (following_line[14])[1:-4]
 
 
 	return top_hit_accession, description, e_value, identity_percent, positive_percent, gap_percent
@@ -121,12 +136,12 @@ def write_result(result):
 def analyzor(path):
 	path_out = path+"out/"
 	results_list = []
-	for file in os.listdir(path):
+	for file in os.listdir(path_out):
 		print(file)
 		file_path = path_out + file
 		infile = open(file_path, 'r')
 		bacteria, scaffold, orf, pathway, top_hit_accession, description, e_value, identity_percent, positive_percent, gap_percent, output_type = read_result(
-			infile)
+			infile, file)
 		infile.close()
 		results = [bacteria, scaffold, orf, output_type, top_hit_accession, description, e_value, identity_percent,
 				   positive_percent, gap_percent]
@@ -263,6 +278,7 @@ def creator(path):
 
 def executor(blastp_path):
 	sub = os.listdir("fasta/")          #List directories in fasta/
+	print(sub)
 	#dir_number = len(sub)
 	subprocess.call("mkdir out", shell=True)
 
